@@ -25,7 +25,7 @@ services:
   witness-init:
     profiles: [witness-init]
     restart: no
-    image: veridian-id/cf-idw-witness:main
+    image: ghcr.io/veridian-id/veridian-wallet/witness:main
     environment:
       - KERI_VAR_DIR=/usr/local/var/keri
       - KERI_SCRIPT_DIR=/usr/local/var/keri/scripts

@@ -3,7 +3,7 @@ name: veridian-prod
 services:
   cred-issuance:
     profiles: [cred-issuance,production,local]
-    image: ${CRED_IMAGE:-veridian-id/cf-cred-issuance:main}
+    image: ${CRED_IMAGE:-ghcr.io/veridian-id/veridian-wallet/cred-issuance:main}
     restart: unless-stopped
     environment:
       - OOBI_ENDPOINT=${CRED_OOBI_ENDPOINT:-http://cred-issuance:3001}
@@ -29,7 +29,7 @@ services:
 
   cred-issuance-ui:
     profiles: [cred-issuance,production,local]
-    image: ${CRED_UI_IMAGE:-veridian-id/cf-cred-issuance-ui:main}
+    image: ${CRED_UI_IMAGE:-ghcr.io/veridian-id/veridian-wallet/cred-issuance-ui:main}
     restart: unless-stopped
     environment:
       - VITE_SERVER_URL=${CRED_UI_SERVER_URL:-http://localhost:3002}
