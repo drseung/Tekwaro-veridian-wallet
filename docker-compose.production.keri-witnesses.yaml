@@ -25,7 +25,7 @@ services:
   witness-init:
     profiles: [witness-init]
     restart: no
-    image: cardanofoundation/cf-idw-witness:main
+    image: veridian-id/cf-idw-witness:main
     environment:
       - KERI_VAR_DIR=/usr/local/var/keri
       - KERI_SCRIPT_DIR=/usr/local/var/keri/scripts

@@ -87,7 +87,7 @@ Ensure that your system meets these requirements to successfully use and develop
 ### Cloning the Repository
 
 ```bash
-git clone https://github.com/cardano-foundation/veridian-wallet.git
+git clone https://github.com/veridian-id/veridian-wallet.git
 cd veridian-wallet
 make init # This will configure the git hooks
 ```

@@ -5,4 +5,4 @@
 
 All migration files should be written in the `migration` directory and will apply the necessary updates when the application starts.
 
-[Note](https://github.com/cardano-foundation/veridian-wallet/pull/1250/files#r2200512079): To ensure forward compatibility, migration scripts must be self-contained and avoid dependencies on application code such as classes, constants, or enums. Instead of instantiating imported classes, migrations should construct records as plain objects to prevent failures if the application's class definitions change in future versions.
+[Note](https://github.com/veridian-id/veridian-wallet/pull/1250/files#r2200512079): To ensure forward compatibility, migration scripts must be self-contained and avoid dependencies on application code such as classes, constants, or enums. Instead of instantiating imported classes, migrations should construct records as plain objects to prevent failures if the application's class definitions change in future versions.

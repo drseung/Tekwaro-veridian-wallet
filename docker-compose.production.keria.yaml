@@ -2,7 +2,7 @@ name: veridian-prod
 
 x-keria-common: &keria-common
   restart: unless-stopped
-  image: ${KERIA_IMAGE:-cardanofoundation/cf-idw-keria:main}
+  image: ${KERIA_IMAGE:-veridian-id/cf-idw-keria:main}
   environment:
     - KERI_AGENT_CORS=${KERI_AGENT_CORS:-true}
     - KERIA_PASSCODE=${KERIA_PASSCODE:-CHANGEME}
