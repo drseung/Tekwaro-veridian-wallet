@@ -32,11 +32,12 @@ docker-publish:
 docker-manifests-merge:
   ARG PLATFORMS
   LOCALLY
+  LET DOCKER_IMAGE_NAME=""
   FOR image_target IN $DOCKER_IMAGES_TARGETS
     IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
-      LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${image_target}
+      SET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${image_target}
     ELSE
-      LET DOCKER_IMAGE_NAME=${image_target}
+      SET DOCKER_IMAGE_NAME=${image_target}
     END
     IF [ "${image_target}" = "cip45-sample-dapp" ]
       LET PLATFORMS="linux/amd64"
