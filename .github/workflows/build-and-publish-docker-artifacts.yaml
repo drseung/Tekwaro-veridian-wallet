@@ -63,7 +63,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-    runs-on: ${{ fromJson(vars.RUNS_ON) }}
+    # add suffix "-arm" to runs-on if matrix.platform is linux/arm64
+    runs-on: ${{ fromJSON(format('["{0}{1}"]', fromJSON(vars.RUNS_ON)[0], matrix.platform == 'linux/arm64' && '-arm' || '')) }}
     strategy:
       matrix: ${{fromJson(needs.set-matrix.outputs.matrix)}}
     steps:
@@ -94,11 +95,14 @@ jobs:
 
       - name: Setup earthbuild
         run: |
-          ARCH=amd64
+          MATRIX_PLATFORM=${{ matrix.platform }}
+          ARCH=${MATRIX_PLATFORM#linux/}
           curl -LO "https://github.com/EarthBuild/earthbuild/releases/latest/download/earth-linux-${ARCH}"
           chmod +x "earth-linux-${ARCH}"
           sudo mv "earth-linux-${ARCH}" /usr/local/bin/earth
           earth bootstrap
+          docker exec earth-buildkitd sh -c \
+                      'printf "#!/bin/sh\nexec \"\$@\"\n" > /usr/bin/earth_debugger && chmod +x /usr/bin/earth_debugger'
 
       - name: Set docker image targets based on path changes from last commit
         id: metadata
@@ -194,7 +198,7 @@ jobs:
             STRIPPED_DOCKER_IMAGES_TARGETS=$(echo $DOCKER_IMAGES_TARGETS | tr -s ' ' | sed -e 's|^ ||' -e 's| $||')
             if [ ! -z "${STRIPPED_DOCKER_IMAGES_TARGETS}" ]; then
               echo "DOCKER_IMAGES_TARGETS=${STRIPPED_DOCKER_IMAGES_TARGETS}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
-              echo "DOCKER_IMAGES_TARGETS_$(echo ${{ matrix.platform }} | sed 's|/|_|g')=${STRIPPED_DOCKER_IMAGES_TARGETS}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+              echo "DOCKER_IMAGES_TARGETS_$(echo $MATRIX_PLATFORM | sed 's|/|_|g')=${STRIPPED_DOCKER_IMAGES_TARGETS}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
             fi
 
             if [ "$IS_PR_FROM_FORK" == "true" ]; then
@@ -303,7 +307,7 @@ jobs:
           fetch-depth: 0
 
       - name: ⛮ cf-gha-baseline
-        uses: cardano-foundation/cf-gha-workflows/actions/cf-gha-baseline@27ed10ed269f89d937edb58ceff0076e1d73bfd9 # main at 14/11/2025
+        uses: cardano-foundation/cf-gha-workflows/actions/cf-gha-baseline@3888021a734e8844b52d23a1f9a32a34750ada5f # main at 20/05/2026
         id: cf-gha-baseline
         with:
           setup_docker_buildx: false
