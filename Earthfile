@@ -2,9 +2,9 @@ VERSION 0.8
 
 IMPORT --allow-privileged github.com/cardano-foundation/cf-gha-workflows/./earthfiles/functions:main AS functions
 
-ARG --global DOCKER_IMAGES_TARGETS="idw-keria idw-witness cred-issuance cred-issuance-ui cip45-sample-dapp"
+ARG --global DOCKER_IMAGES_TARGETS="keria witness cred-issuance cred-issuance-ui cip45-sample-dapp"
 
-ARG --global DOCKER_IMAGES_PREFIX="cf"
+ARG --global DOCKER_IMAGES_PREFIX=""
 ARG --global DOCKER_IMAGES_EXTRA_TAGS=""
 ARG --global DOCKER_IMAGES_LABELS=""
 ARG --global DOCKER_REGISTRIES=""
@@ -33,6 +33,11 @@ docker-manifests-merge:
   ARG PLATFORMS
   LOCALLY
   FOR image_target IN $DOCKER_IMAGES_TARGETS
+    IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+      LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${image_target}
+    ELSE
+      LET DOCKER_IMAGE_NAME=${image_target}
+    END
     IF [ "${image_target}" = "cip45-sample-dapp" ]
       LET PLATFORMS="linux/amd64"
       LET DOCKER_REGISTRIES="$(echo ${DOCKER_REGISTRIES} | sed 's|hub.docker.com||g')"
@@ -40,7 +45,7 @@ docker-manifests-merge:
     DO functions+DOCKER_MANIFESTS_MERGE \
        --PLATFORMS="${PLATFORMS}" \
        --DOCKER_REGISTRIES="${DOCKER_REGISTRIES}" \
-       --DOCKER_IMAGE_NAME="${DOCKER_IMAGES_PREFIX}-${image_target}" \
+       --DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME}" \
        --DOCKER_IMAGES_EXTRA_TAGS="${DOCKER_IMAGES_EXTRA_TAGS}" \
        --PUSH=$PUSH
   END
@@ -50,14 +55,17 @@ keria-src:
   GIT CLONE --branch $KERIA_GIT_REF $KERIA_GIT_REPO_URL /keria
   SAVE ARTIFACT /keria
 
-idw-keria:
+keria:
   ARG EARTHLY_TARGET_NAME
   ARG DOCKER_IMAGES_EXTRA_TAGS
   ARG FORCE_BUILD=false
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
-  LET KERIA_UPSTREAM_TAG=""
-
   LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
+  LET KERIA_UPSTREAM_TAG=""
 
   IF [ "${KERIA_GIT_REF}" != "" ]
       SET KERIA_UPSTREAM_TAG=${KERIA_GIT_REF}
@@ -80,7 +88,8 @@ idw-keria:
           FROM ${KERIA_DOCKER_IMAGE_REPO}:${KERIA_DOCKER_IMAGE_TAG}
       END
 
-      RUN apk add --no-cache jq envsubst
+      RUN apk add --verbose --no-cache jq envsubst &>/tmp/apk-output || true
+      RUN cat /tmp/apk-output
       ENTRYPOINT keria start --config-file backer-oobis --config-dir ./scripts
 
     END
@@ -98,13 +107,17 @@ idw-keria:
        --DOCKER_IMAGES_EXTRA_TAGS="${DOCKER_IMAGES_EXTRA_TAGS} keria-${KERIA_UPSTREAM_TAG}"
   END
 
-idw-witness:
+witness:
   ARG EARTHLY_TARGET_NAME
   ARG DOCKER_IMAGES_EXTRA_TAGS
   ARG FORCE_BUILD=false
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
-
   LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
+
   RUN echo $TARGETPLATFORM
   IF [ "${FORCE_BUILD}" = "false" ]
     ARG REGISTRY_IMAGE_EXISTS=$( (docker manifest inspect ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:keri-${KERI_DOCKER_IMAGE_TAG} 2> /dev/null | grep -q layers) || echo false)
@@ -134,7 +147,12 @@ idw-witness:
 
 cred-issuance:
   ARG EARTHLY_TARGET_NAME
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
 
   WAIT
     FROM DOCKERFILE ./services/credential-server
@@ -151,7 +169,12 @@ cred-issuance:
 
 cred-issuance-ui:
   ARG EARTHLY_TARGET_NAME
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
 
   WAIT
     FROM DOCKERFILE ./services/credential-server-ui
@@ -168,7 +191,12 @@ cred-issuance-ui:
 
 cip45-sample-dapp:
   ARG EARTHLY_TARGET_NAME
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
   LOCALLY
 
   # skip this for arm as it takes forever
@@ -188,8 +216,13 @@ cip45-sample-dapp:
   END
 
 keria-passcode-gen:
- ARG EARTHLY_TARGET_NAME
- LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ARG EARTHLY_TARGET_NAME
+  LOCALLY
+  IF [ "${DOCKER_IMAGES_PREFIX}" != "" ]
+    LET DOCKER_IMAGE_NAME=${DOCKER_IMAGES_PREFIX}-${EARTHLY_TARGET_NAME}
+  ELSE
+    LET DOCKER_IMAGE_NAME=${EARTHLY_TARGET_NAME}
+  END
 
   WAIT
     FROM DOCKERFILE -f ./services/Dockerfile.keria-passcode-gen ./services
